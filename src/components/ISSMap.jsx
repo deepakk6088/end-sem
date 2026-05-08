@@ -1,4 +1,5 @@
-import { MapContainer, TileLayer, Marker, Polyline, Popup } from 'react-leaflet'
+import { MapContainer, TileLayer, Marker, Polyline, Popup, useMap } from 'react-leaflet'
+import { useEffect } from 'react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
@@ -8,6 +9,17 @@ const issIcon = L.divIcon({
   iconSize: [38, 38],
   iconAnchor: [19, 19],
 })
+
+function MapUpdater({ center }) {
+  const map = useMap()
+
+  useEffect(() => {
+    if (!center) return
+    map.setView(center, map.getZoom(), { animate: true, duration: 0.9 })
+  }, [center, map])
+
+  return null
+}
 
 export default function ISSMap({ positions }) {
   const current = positions[0]
@@ -25,6 +37,7 @@ export default function ISSMap({ positions }) {
       </div>
       <div className="map-wrapper">
         <MapContainer center={center} zoom={2} scrollWheelZoom={true} style={{ height: '460px' }}>
+          <MapUpdater center={center} />
           <TileLayer
             attribution='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

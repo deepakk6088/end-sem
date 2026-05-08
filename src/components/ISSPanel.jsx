@@ -2,6 +2,7 @@ import ISSMap from './ISSMap.jsx'
 
 export default function ISSPanel({
   currentPosition,
+  positions,
   speed,
   nearestPlace,
   trackedCount,
@@ -32,18 +33,18 @@ export default function ISSPanel({
         <div className="stat-card">
           <p className="stat-label">Latitude / Longitude</p>
           <p className="stat-value">
-            {loading || !currentPosition
+            {!currentPosition
               ? 'Loading...'
               : `${currentPosition.lat.toFixed(3)}, ${currentPosition.lng.toFixed(3)}`}
           </p>
         </div>
         <div className="stat-card">
           <p className="stat-label">Speed</p>
-          <p className="stat-value">{loading ? 'Calculating...' : `${speed.toFixed(2)} km/h`}</p>
+          <p className="stat-value">{currentPosition ? `${speed.toFixed(2)} km/h` : 'Calculating...'}</p>
         </div>
         <div className="stat-card">
           <p className="stat-label">Nearest Place</p>
-          <p className="stat-value">{loading ? 'Loading...' : nearestPlace}</p>
+          <p className="stat-value">{currentPosition ? nearestPlace : 'Loading...'}</p>
         </div>
         <div className="stat-card">
           <p className="stat-label">Tracked Positions</p>
@@ -51,7 +52,7 @@ export default function ISSPanel({
         </div>
       </div>
 
-      <ISSMap positions={currentPosition ? [currentPosition, ...[]} : []} />
+      <ISSMap positions={positions} />
 
       {error && (
         <div className="error-banner">

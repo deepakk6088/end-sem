@@ -108,6 +108,10 @@ const fallbackScience = [
 ]
 
 function normalizeArticle(article, category, index) {
+  const articleUrl = article.url || ''
+  const hasPlaceholderUrl = articleUrl.includes('example.com')
+  const fallbackSearchUrl = `https://news.google.com/search?q=${encodeURIComponent(article.title || 'space news')}`
+
   return {
     id: `${category}-${index}-${article.publishedAt ?? Date.now()}`,
     title: article.title || 'Untitled report',
@@ -115,31 +119,40 @@ function normalizeArticle(article, category, index) {
     source: article.source || { name: 'Unknown source' },
     author: article.author || 'Unknown author',
     publishedAt: article.publishedAt || new Date().toISOString(),
-    url: article.url || '#',
+    url: articleUrl && !hasPlaceholderUrl ? articleUrl : fallbackSearchUrl,
     urlToImage: article.urlToImage || 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80',
     category,
   }
 }
 
 async function fetchCategory(category) {
+  const fallbackSet = category === 'science' ? fallbackScience : fallbackArticles
+  const normalizedFallback = fallbackSet.map((article, index) =>
+    normalizeArticle(article, category === 'science' ? 'Science' : 'General', index),
+  )
+
   if (!NEWS_API_KEY) {
-    return category === 'science'
-      ? fallbackScience.map((article, index) => normalizeArticle(article, 'Science', index))
-      : fallbackArticles.map((article, index) => normalizeArticle(article, 'General', index))
+    return normalizedFallback
   }
 
-  const url = `${NEWS_BASE_URL}?country=us&pageSize=5&category=${category}&apiKey=${NEWS_API_KEY}`
-  const response = await fetch(url)
-  if (!response.ok) {
-    throw new Error(`News API error: ${response.status}`)
-  }
+  try {
+    const url = `${NEWS_BASE_URL}?country=us&pageSize=5&category=${category}&apiKey=${NEWS_API_KEY}`
+    const response = await fetch(url)
+    if (!response.ok) {
+      throw new Error(`News API error: ${response.status}`)
+    }
 
-  const data = await response.json()
-  if (!Array.isArray(data.articles)) {
-    throw new Error('News API returned unexpected results')
-  }
+    const data = await response.json()
+    if (!Array.isArray(data.articles)) {
+      throw new Error('News API returned unexpected results')
+    }
 
-  return data.articles.map((article, index) => normalizeArticle(article, category === 'science' ? 'Science' : 'General', index))
+    return data.articles.map((article, index) =>
+      normalizeArticle(article, category === 'science' ? 'Science' : 'General', index),
+    )
+  } catch (error) {
+    return normalizedFallback
+  }
 }
 
 export async function fetchNewsByCategory(category) {
